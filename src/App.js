@@ -23,7 +23,7 @@ function useTypewriter(text, speed = 6) {
       else { setDone(true); clearInterval(iv); }
     }, speed);
     return () => clearInterval(iv);
-  }, [text]);
+  }, [text, speed]);
   return { displayed, done };
 }
 
