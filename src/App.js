@@ -14,6 +14,7 @@ function useTypewriter(text, speed = 6) {
   const [displayed, setDisplayed] = useState("");
   const [done, setDone] = useState(false);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     if (!text) { setDisplayed(""); setDone(false); return; }
     setDisplayed(""); setDone(false);
     let i = 0;
