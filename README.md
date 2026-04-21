@@ -1,70 +1,94 @@
-# Getting Started with Create React App
+# ContentFlow AI
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack AI content generation platform built with Java Spring Boot and React.
 
-## Available Scripts
+**Live Demo:** https://content-flow-frontend-lemon.vercel.app
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## What it does
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **Generate** — produce blog posts, LinkedIn posts, emails, and product descriptions powered by Llama 3.3 70B
+- **Refine** — chain a second AI call to improve, shorten, expand, or change the tone of any output
+- **Bulk Generate** — run all 4 content formats simultaneously from a single topic
+- **Summarize** — condense any long-form text into a clean summary
+- **History** — every generation saved automatically to a database, browsable and filterable
+- **AutoPost Scheduler** — schedule content to generate automatically at a future time via a background job
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## Tech stack
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+| Layer     | Technology                            |
+|-----------|---------------------------------------|
+| Backend   | Java 17, Spring Boot 3, OkHttp        |
+| Database  | H2 (in-memory), Spring Data JPA       |
+| AI        | Groq API — Llama 3.3 70B              |
+| Frontend  | React, custom CSS                     |
+| Deploy    | Railway (backend) + Vercel (frontend) |
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Architecture
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```
+React Frontend (Vercel)
+        ↓ HTTP
+Spring Boot REST API (Railway)
+        ↓ HTTP
+Groq API — Llama 3.3 70B
+        ↓
+H2 In-Memory Database
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+**AI Chaining** — the Refine feature feeds the output of one AI call as the input of a second call with a transformation instruction. This is the core pattern behind agentic AI systems.
 
-### `npm run eject`
+**Background Scheduling** — `@Scheduled(fixedRate = 60000)` runs a background thread every 60 seconds, queries for pending posts whose scheduled time has passed, fires the Groq API, and updates the database record automatically.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+---
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## API Endpoints
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+| Method | Endpoint                  | Description                        |
+|--------|---------------------------|------------------------------------|
+| POST   | /api/content/generate     | Generate content by type and topic |
+| POST   | /api/content/refine       | Refine existing content            |
+| POST   | /api/content/bulk         | Generate all 4 formats at once     |
+| POST   | /api/content/summarize    | Summarize long-form text           |
+| GET    | /api/content/history      | Retrieve all saved generations     |
+| DELETE | /api/content/history/{id} | Delete a history item              |
+| POST   | /api/autopost/schedule    | Schedule a future generation       |
+| GET    | /api/autopost/queue       | View the scheduled post queue      |
+| DELETE | /api/autopost/{id}        | Remove a scheduled post            |
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+---
 
-## Learn More
+## Local Setup
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```bash
+# Clone
+git clone https://github.com/abdulrafay20069/contentflow
+cd contentflow
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+# Add your key
+# Create src/main/resources/application.properties and add:
+# GROQ_API_KEY=your_key_here
 
-### Code Splitting
+# Run backend
+mvn spring-boot:run
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+# Run frontend (separate terminal)
+cd frontend
+npm install
+npm start
+```
 
-### Analyzing the Bundle Size
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## What I learned building this
 
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- Designing and consuming REST APIs end to end
+- Spring Data JPA — mapping Java classes to database tables with zero SQL
+- AI prompt engineering and chaining multiple LLM calls
+- Background job scheduling with @Scheduled
+- Deploying a split-stack app across two platforms (Railway + Vercel)
