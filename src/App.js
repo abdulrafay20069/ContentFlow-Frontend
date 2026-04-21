@@ -4,18 +4,18 @@ import "./App.css";
 const API_BASE = "https://contentflow-production-81fd.up.railway.app/api";
 
 const CONTENT_TYPES = [
-  { id: "blog",    label: "Blog Post",     icon: "✦" },
-  { id: "social",  label: "Social Media",  icon: "◈" },
-  { id: "email",   label: "Email",         icon: "◉" },
-  { id: "product", label: "Product Copy",  icon: "◆" },
+  { id: "blog", label: "Blog Post", icon: "✦" },
+  { id: "social", label: "Social Media", icon: "◈" },
+  { id: "email", label: "Email", icon: "◉" },
+  { id: "product", label: "Product Copy", icon: "◆" },
 ];
 
 const REFINE_ACTIONS = [
   { id: "improve", label: "✨ Improve" },
-  { id: "shorten", label: "✂ Shorten"  },
-  { id: "expand",  label: "⊕ Expand"   },
-  { id: "formal",  label: "🎩 Formal"   },
-  { id: "casual",  label: "💬 Casual"   },
+  { id: "shorten", label: "✂ Shorten" },
+  { id: "expand", label: "⊕ Expand" },
+  { id: "formal", label: "🎩 Formal" },
+  { id: "casual", label: "💬 Casual" },
 ];
 
 // Typewriter hook — same as before
@@ -48,37 +48,37 @@ export default function App() {
 
   // ── Generate state ──────────────────────────────────
   const [contentType, setContentType] = useState("blog");
-  const [topic, setTopic]             = useState("");
-  const [output, setOutput]           = useState("");
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState("");
-  const [copied, setCopied]           = useState(false);
-  const [refining, setRefining]       = useState(false);
+  const [topic, setTopic] = useState("");
+  const [output, setOutput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [refining, setRefining] = useState(false);
 
   // ── Bulk state ──────────────────────────────────────
-  const [bulkMode, setBulkMode]       = useState(false);
+  const [bulkMode, setBulkMode] = useState(false);
   const [bulkResults, setBulkResults] = useState(null);
   const [bulkLoading, setBulkLoading] = useState(false);
 
   // ── Summarize state ─────────────────────────────────
-  const [summaryText, setSummaryText]     = useState("");
+  const [summaryText, setSummaryText] = useState("");
   const [summaryOutput, setSummaryOutput] = useState("");
   const [summaryLoading, setSummaryLoading] = useState(false);
-  const [summaryError, setSummaryError]   = useState("");
+  const [summaryError, setSummaryError] = useState("");
 
   // ── History state ───────────────────────────────────
-  const [history, setHistory]             = useState([]);
+  const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyFilter, setHistoryFilter] = useState("all");
   const [expandedHistory, setExpandedHistory] = useState(null);
 
   // ── AutoPost state ──────────────────────────────────
-  const [schedTopic, setSchedTopic]   = useState("");
-  const [schedType, setSchedType]     = useState("blog");
-  const [scheduleIn, setScheduleIn]   = useState("5");
-  const [queue, setQueue]             = useState([]);
-  const [scheduling, setScheduling]   = useState(false);
-  const [schedError, setSchedError]   = useState("");
+  const [schedTopic, setSchedTopic] = useState("");
+  const [schedType, setSchedType] = useState("blog");
+  const [scheduleIn, setScheduleIn] = useState("5");
+  const [queue, setQueue] = useState([]);
+  const [scheduling, setScheduling] = useState(false);
+  const [schedError, setSchedError] = useState("");
   const [expandedPost, setExpandedPost] = useState(null);
 
   const { displayed, done } = useTypewriter(output);
@@ -97,12 +97,21 @@ export default function App() {
   const fetchQueue = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/autopost/queue`);
-      setQueue(await res.json());
+      const newQueue = await res.json();
+      // Check if any post just flipped to GENERATED
+      newQueue.forEach(post => {
+        const old = queue.find(q => q.id === post.id);
+        if (old?.status === "PENDING" && post.status === "GENERATED") {
+          setSchedError(""); // clear any errors
+          alert(`✓ AutoPost ready: "${post.topic}"`);
+        }
+      });
+      setQueue(newQueue);
     } catch { /* silent */ }
-  }, []);
+  }, [queue]);
 
   useEffect(() => {
-    if (activeTab === "history")  fetchHistory();
+    if (activeTab === "history") fetchHistory();
     if (activeTab === "autopost") fetchQueue();
   }, [activeTab, fetchHistory, fetchQueue]);
 
@@ -118,7 +127,7 @@ export default function App() {
     if (!topic.trim()) return;
     setLoading(true); setOutput(""); setError(""); setBulkResults(null);
     try {
-      const res  = await fetch(`${API_BASE}/content/generate`, {
+      const res = await fetch(`${API_BASE}/content/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: contentType, topic }),  // ← FIX: was "contentType"
@@ -134,7 +143,7 @@ export default function App() {
     if (!topic.trim()) return;
     setBulkLoading(true); setBulkResults(null); setOutput(""); setError("");
     try {
-      const res  = await fetch(`${API_BASE}/content/bulk`, {
+      const res = await fetch(`${API_BASE}/content/bulk`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic }),
@@ -149,7 +158,7 @@ export default function App() {
     const prev = output;
     setRefining(true); setOutput("");
     try {
-      const res  = await fetch(`${API_BASE}/content/refine`, {
+      const res = await fetch(`${API_BASE}/content/refine`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: prev, action }),
@@ -165,7 +174,7 @@ export default function App() {
     if (!summaryText.trim()) return;
     setSummaryLoading(true); setSummaryOutput(""); setSummaryError("");
     try {
-      const res  = await fetch(`${API_BASE}/content/summarize`, {
+      const res = await fetch(`${API_BASE}/content/summarize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: summaryText }),
@@ -181,7 +190,7 @@ export default function App() {
     if (!schedTopic.trim()) return;
     setScheduling(true); setSchedError("");
     try {
-      const res  = await fetch(`${API_BASE}/autopost/schedule`, {
+      const res = await fetch(`${API_BASE}/autopost/schedule`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: schedTopic, type: schedType, scheduleIn }),
@@ -232,10 +241,10 @@ export default function App() {
         <div className="cf-nav-section-label">Tools</div>
         <nav className="cf-nav">
           {[
-            { id: "generate",  icon: "+", label: "Generate"  },
+            { id: "generate", icon: "+", label: "Generate" },
             { id: "summarize", icon: "~", label: "Summarize" },
-            { id: "history",   icon: "⊡", label: "History"   },
-            { id: "autopost",  icon: "⟳", label: "AutoPost"  },
+            { id: "history", icon: "⊡", label: "History" },
+            { id: "autopost", icon: "⟳", label: "AutoPost" },
           ].map(({ id, icon, label }) => (
             <button
               key={id}
@@ -319,6 +328,11 @@ export default function App() {
                 <div className="cf-panel cf-output-panel">
                   <div className="cf-output-header">
                     <span className="cf-label">{done && output ? "Output ✓" : "Output"}</span>
+                    {output && done && (
+                      <span className="cf-char-count">
+                        {output.split(/\s+/).filter(Boolean).length} words · {output.length} chars
+                      </span>
+                    )}
                     {output && (
                       <div className="cf-output-actions">
                         <button className="cf-action-btn" onClick={() => setOutput("")}>Clear</button>
